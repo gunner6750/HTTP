@@ -15,7 +15,9 @@ import java.net.http.HttpRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class RequestHandler implements Runnable {
 
@@ -46,9 +48,9 @@ class RequestHandler implements Runnable {
         if (request.httpMethod.equals(HTTP_GET_METHOD)) {   
             handleGetRequest(request);
             }
-//        else if (request.httpMethod.equals(HTTP_POST_METHOD)){
-//            handlePostRequest(request);
-//        }
+        else if (request.httpMethod.equals(HTTP_POST_METHOD)){
+            handlePostRequest(request);
+        }
         else {
             sendErrorMessage(HTTP_NOT_IMPL_RESPONSE, NOT_IMPL_HTML, request.httpVersion);
             }
@@ -63,23 +65,63 @@ class RequestHandler implements Runnable {
         }
     }
 
-    private HttpRequest readRequest() throws IOException {
-        BufferedReader fromClient = new BufferedReader(
-                new InputStreamReader(clientSock.getInputStream()));
-        String requestLine =fromClient.readLine();
+private HttpRequest readRequest() throws IOException {
+        BufferedReader fromClient = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
+        String requestLine = fromClient.readLine();
         if (requestLine == null) {
             return null;
         }
+
         String[] requestTokens = requestLine.split(" ");
-        HttpRequest request =new HttpRequest(requestTokens[0], requestTokens[1],
-                requestTokens[2]);
-        while ((requestLine =fromClient.readLine()) != null && !requestLine.trim().equals("")){
-            request.addHeader(requestLine);
+        HttpRequest request = new HttpRequest(requestTokens[0], requestTokens[1], requestTokens[2]);
+
+        // Read headers
+        String headerLine;
+        int contentLength = 0;
+        while ((headerLine = fromClient.readLine()) != null && !headerLine.trim().equals("")) {
+            request.addHeader(headerLine);
+            if (headerLine.toLowerCase().startsWith("content-length:")) {
+                contentLength = Integer.parseInt(headerLine.split(":")[1].trim());
+            }
         }
+
+        // Read the body if content length is specified
+        Map<String, String> requestBody = new HashMap<>();
+        if (contentLength > 0) {
+            char[] bodyChars = new char[contentLength];
+            fromClient.read(bodyChars, 0, contentLength);
+            String requestBodyString = new String(bodyChars);
+            String[] bodyPairs = requestBodyString.split("&");
+            for (String pair : bodyPairs) {
+                String[] keyValue = pair.split("=");
+                if (keyValue.length == 2) {
+                    requestBody.put(keyValue[0], keyValue[1]);
+                }
+            }
+        }
+
+        request.setBodyParameters(requestBody);
         return request;
     }
-    private void handlePostRequest(HttpRequest request) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    private void handlePostRequest(HttpRequest request) throws IOException {
+        OutputStream toClient = clientSock.getOutputStream();
+        PrintWriter pw = new PrintWriter(toClient);
+        Map<String, String>map=request.getBodyParameters();
+        // Here you can process the POST request data
+        for (String key : map.keySet()) {
+            System.out.println(key);
+            System.out.println(map.get(key));
+            // write your code here
+        }
+        //System.out.println("Received POST request with body: " + map.get("name"));
+
+        pw.println(HTTP_OK_RESPONSE);
+        pw.println("Date:" + LocalDateTime.now());
+        pw.println(SERVER_ID_HEADER);
+        pw.println("Content-type: text/html");
+        pw.println();
+        pw.println("<HTML><HEAD><TITLE>POST Response</TITLE></HEAD> <BODY><H1>Received POST request</H1></BODY></HTML>");
+        pw.flush();
     }
     private void handleGetRequest(HttpRequest request) throws IOException {
         OutputStream toClient = clientSock.getOutputStream();
@@ -154,13 +196,13 @@ class RequestHandler implements Runnable {
     }
 
 
-
-    private static class HttpRequest {
+private static class HttpRequest {
 
         private String httpMethod;
         private String path;
         private String httpVersion;
         private List<String> headers = new ArrayList<>();
+        private Map<String, String> bodyParameters = new HashMap<>();
 
         private HttpRequest(String httpMethod, String path, String httpVersion) {
             this.httpMethod = httpMethod;
@@ -171,5 +213,18 @@ class RequestHandler implements Runnable {
         private void addHeader(String header) {
             headers.add(header);
         }
+
+        public void addBodyParameter(String key, String value) {
+            this.bodyParameters.put(key, value);
+        }
+
+        public Map<String, String> getBodyParameters() {
+            return bodyParameters;
+        }
+        
+        public void setBodyParameters(Map<String, String> bodyParameters) {
+            this.bodyParameters = bodyParameters;
+        }
+
     }
 }
