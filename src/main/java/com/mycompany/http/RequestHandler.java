@@ -21,6 +21,7 @@ class RequestHandler implements Runnable {
 
     private static final String SERVER_ID_HEADER ="Server: Httpd 1.0";
     private static final String HTTP_GET_METHOD = "GET";
+    private static final String HTTP_POST_METHOD = "POST";
     private static final String HTTP_OK_RESPONSE ="HTTP/1.0 200 OK";
     private static final String NOT_FOUND_RESPONSE ="HTTP/1.0 404 File Not Found";
     private static final String NOT_FOUND_HTML ="<HTML><HEAD><TITLE>File Not Found</TITLE></HEAD> <BODY><H1>HTTP Error 404: File Not Found</H1></BODY></HTML>";
@@ -44,8 +45,12 @@ class RequestHandler implements Runnable {
         
         if (request.httpMethod.equals(HTTP_GET_METHOD)) {   
             handleGetRequest(request);
-            } else {
-                sendErrorMessage(HTTP_NOT_IMPL_RESPONSE, NOT_IMPL_HTML, request.httpVersion);
+            }
+//        else if (request.httpMethod.equals(HTTP_POST_METHOD)){
+//            handlePostRequest(request);
+//        }
+        else {
+            sendErrorMessage(HTTP_NOT_IMPL_RESPONSE, NOT_IMPL_HTML, request.httpVersion);
             }
         } catch (IOException ioe) {
             ioe.printStackTrace();
@@ -73,12 +78,18 @@ class RequestHandler implements Runnable {
         }
         return request;
     }
+    private void handlePostRequest(HttpRequest request) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
     private void handleGetRequest(HttpRequest request) throws IOException {
         OutputStream toClient = clientSock.getOutputStream();
+        System.out.println(request.path);
+        if (request.path.endsWith("?")) {
+            request.path = request.path.substring(0,request.path.length()-1);
+        }
         if (request.path.endsWith("/")) {
             request.path = request.path + "index.html";
         }
-
         try {
             byte[] fileContent = readFile(removeInitialSlash(request.path));
             if (request.httpVersion.startsWith("HTTP/")) {
@@ -92,6 +103,7 @@ class RequestHandler implements Runnable {
                 pw.flush();
             }
             toClient.write(fileContent);
+            System.out.println(fileContent);
         } catch (IOException ioe) {
             sendErrorMessage(NOT_FOUND_RESPONSE, NOT_FOUND_HTML, request.httpVersion); 
             ioe.printStackTrace();
@@ -140,6 +152,8 @@ class RequestHandler implements Runnable {
         pw.println(html);
         pw.flush();
     }
+
+
 
     private static class HttpRequest {
 
