@@ -6,6 +6,7 @@ package com.mycompany.http;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -104,15 +105,31 @@ private HttpRequest readRequest() throws IOException {
         return request;
     }
     private void handlePostRequest(HttpRequest request) throws IOException {
+
+        //myWriter.write("Files in Java might be tricky, but it is fun enough!");
+        
         OutputStream toClient = clientSock.getOutputStream();
         PrintWriter pw = new PrintWriter(toClient);
         Map<String, String>map=request.getBodyParameters();
         // Here you can process the POST request data
-        for (String key : map.keySet()) {
-            System.out.println(key);
-            System.out.println(map.get(key));
-            // write your code here
-        }
+        String filename="www//post//"+LocalDateTime.now();
+        filename=filename.replace(':', '-');
+        filename=filename.substring(0, filename.indexOf("."))+".txt";
+        File myObj = new File(filename);
+        FileWriter myWriter = new FileWriter(filename);
+
+        myWriter.write(map.get("name"));
+        myWriter.write(" ");
+
+        myWriter.write(map.get("age"));
+        myWriter.write(" ");
+
+        myWriter.write(map.get("message"));
+        myWriter.write(" ");
+        
+        myWriter.write("\n\n");
+        myWriter.write("Date:" + LocalDateTime.now());
+        myWriter.close();
         //System.out.println("Received POST request with body: " + map.get("name"));
 
         pw.println(HTTP_OK_RESPONSE);
@@ -145,7 +162,6 @@ private HttpRequest readRequest() throws IOException {
                 pw.flush();
             }
             toClient.write(fileContent);
-            System.out.println(fileContent);
         } catch (IOException ioe) {
             sendErrorMessage(NOT_FOUND_RESPONSE, NOT_FOUND_HTML, request.httpVersion); 
             ioe.printStackTrace();

@@ -1,0 +1,6 @@
+com\mycompany\http\HttpServer.class
+com\mycompany\http\RequestHandler$HttpRequest.class
+com\mycompany\http\HttpClient.class
+com\mycompany\http\SimpleHTTPServer.class
+com\mycompany\http\RequestHandler.class
+com\mycompany\http\HTTP.class
