@@ -66,7 +66,7 @@ class RequestHandler implements Runnable {
         }
     }
 
-private HttpRequest readRequest() throws IOException {
+    private HttpRequest readRequest() throws IOException {
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         String requestLine = fromClient.readLine();
         if (requestLine == null) {
@@ -149,6 +149,13 @@ private HttpRequest readRequest() throws IOException {
         if (request.path.endsWith("/")) {
             request.path = request.path + "index.html";
         }
+        if (getMimeFromExtension(request.path).equals("text/plain")) {
+            PrintWriter pw = new PrintWriter(toClient);
+            pw.println("<HTML><HEAD><TITLE>GET Response</TITLE></HEAD> <BODY><H1>Received GET request</H1></BODY></HTML>");
+
+        }
+        System.out.println(getMimeFromExtension(request.path));
+        System.out.println(request.httpVersion);
         try {
             byte[] fileContent = readFile(removeInitialSlash(request.path));
             if (request.httpVersion.startsWith("HTTP/")) {
@@ -158,6 +165,7 @@ private HttpRequest readRequest() throws IOException {
                 pw.println(SERVER_ID_HEADER);
                 pw.println("Content-length: " + fileContent.length);
                 pw.println("Content-type: " + getMimeFromExtension(request.path));
+
                 pw.println();
                 pw.flush();
             }
