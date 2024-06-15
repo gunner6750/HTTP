@@ -8,6 +8,8 @@ package Application;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 class RequestHandler implements Runnable {
 
@@ -67,7 +70,36 @@ class RequestHandler implements Runnable {
             }
         }
     }
+    private void addUrltoIndex(String fileName) throws FileNotFoundException, IOException{
+        String urlForm="    <a href=post/"+fileName+">"+fileName+"</a><br><br>";
+        BufferedReader reader = new BufferedReader(new FileReader("www/index.html"));
+        int lines = 0;
+        while (reader.readLine() != null) lines++;
+        reader.close();
+        System.out.println(lines);
+        String content = "";
+        int readingLines=0;
+        File myObj = new File("www/index.html");
+        Scanner myReader = new Scanner(myObj);
+        while (myReader.hasNextLine()) {
+            if(readingLines==lines-2){
+                content = content+urlForm+"\n";
+            }
+            content = content + myReader.nextLine()+"\n";
+            readingLines++;
+            //System.out.println(content);
+        }
+        myReader.close();
 
+        try {
+            String filename1 = "www/index.html";
+            FileWriter fw = new FileWriter(filename1); //the true will append the new data
+            fw.write(content);//appends the string to the file
+            fw.close();
+        } catch (IOException ioe) {
+            System.err.println("IOException: " + ioe.getMessage());
+        }
+    }
     private HttpRequest readRequest() throws IOException {
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
         String requestLine = fromClient.readLine();
@@ -117,26 +149,28 @@ class RequestHandler implements Runnable {
         PrintWriter pw = new PrintWriter(toClient);
         Map<String, String>map=request.getBodyParameters();
         // Here you can process the POST request data
-        String filename="www//post//"+LocalDateTime.now();
+        String filename=""+LocalDateTime.now();
         filename=filename.replace(':', '-');
         filename=filename.substring(0, filename.indexOf("."))+".txt";
+        addUrltoIndex(filename);
+        filename="www//post//"+filename;
         File myObj = new File(filename);
         FileWriter myWriter = new FileWriter(filename);
 
         myWriter.write(map.get("name"));
-        myWriter.write(" ");
+        myWriter.write("\n");
 
         myWriter.write(map.get("age"));
-        myWriter.write(" ");
+        myWriter.write("\n");
 
-        myWriter.write(map.get("message"));
-        myWriter.write(" ");
+        myWriter.write(map.get("message").replace("+", " "));
+        myWriter.write("\n");
         
         myWriter.write("\n\n");
         myWriter.write("Date:" + LocalDateTime.now());
         myWriter.close();
         //System.out.println("Received POST request with body: " + map.get("name"));
-
+        
         pw.println(HTTP_OK_RESPONSE);
         pw.println("Date:" + LocalDateTime.now());
         pw.println(SERVER_ID_HEADER);
