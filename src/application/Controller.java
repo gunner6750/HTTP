@@ -2,6 +2,8 @@ package Application;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -31,8 +33,25 @@ public class Controller implements Initializable{
 		homePage = "www.google.com";
 		textField.setText(homePage);
 		webZoom = 1;
+                webView.setOnMouseClicked(event -> {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    textField.setText(webView.getEngine().getLocation());
+                    
+                        });
 		loadPage();
 	}
+        private String getUrl(){
+            String url;
+            		history = engine.getHistory();
+                        
+		ObservableList<WebHistory.Entry> entries = history.getEntries();
+                url=entries.get(entries.size()-1).getUrl();
+            return url;
+        }
 	@FXML
 	public void loadPage() {
 		

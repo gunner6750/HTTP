@@ -22,6 +22,7 @@ public class HttpServer {
     void serve() {
         try {
             ServerSocket listeningSocket = new ServerSocket(portNo);
+            System.out.println("Server is running at port 8080");
             while (true) {
                 Socket clientSocket = listeningSocket.accept();
                 clientSocket.setSoLinger(true, LINGER_TIME);
