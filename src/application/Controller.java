@@ -55,8 +55,12 @@ public class Controller implements Initializable{
 	@FXML
 	public void loadPage() {
 		
-		//engine.load("http://www.google.com");
-		engine.load("http://"+textField.getText());
+		String url=textField.getText();
+                if(url.startsWith("http://") || url.startsWith("https://")){
+                    engine.load(url);
+                }
+                else
+		engine.load("http://"+url);
 	}
 	@FXML
 	public void refreshPage() {
